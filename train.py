@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 from utils import load_checkpoint,save_checkpoint,print_examples
 from get_loader import get_loader
 from model import CNNtoRNN
@@ -51,7 +52,7 @@ def train():
 
     model.train()
 
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs), desc="Epochs"):
         if save_model:
             print_examples(model,device,dataset)
             checkpoint={
@@ -60,7 +61,9 @@ def train():
                 "step":step,
             }
             save_checkpoint(checkpoint)
-        for idx,(imgs,captions) in enumerate(train_loader):
+        
+        loop = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", leave=False)
+        for idx,(imgs,captions) in enumerate(loop):
             imgs=imgs.to(device)
             captions=captions.to(device)
 
@@ -73,6 +76,8 @@ def train():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            loop.set_postfix(loss=loss.item())
 
 if __name__=="__main__":
     train()
